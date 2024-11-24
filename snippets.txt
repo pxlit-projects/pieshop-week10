@@ -1,0 +1,248 @@
+//////////////////////
+//OrderRepository.cs//
+//////////////////////
+
+    public void CreateOrder(Order order)
+    {
+        order.OrderPlaced = DateTime.Now;
+
+        List<ShoppingCartItem>? shoppingCartItems = _shoppingCart.GetShoppingCartItems();
+        order.OrderTotal = _shoppingCart.GetShoppingCartTotal();
+
+        order.OrderDetails = new List<OrderDetail>();
+
+        //adding the order with its details
+
+        foreach (ShoppingCartItem? shoppingCartItem in shoppingCartItems)
+        {
+            var orderDetail = new OrderDetail
+            {
+                Amount = shoppingCartItem.Amount,
+                PieId = shoppingCartItem.Pie.PieId,
+                Price = shoppingCartItem.Pie.Price
+            };
+
+            order.OrderDetails.Add(orderDetail);
+        }
+
+        _context.Orders.Add(order);
+
+        _context.SaveChanges();
+    }
+
+///////////////
+/// Order.cs //
+///////////////
+
+    [Required]
+    [StringLength(50)]
+    [DataType(DataType.EmailAddress)]
+    [RegularExpression(@"(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|""(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*"")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])",
+        ErrorMessage = "The email address is not entered in a correct format")]
+		
+
+
+//////////////////////
+//Checkout.cshtml v1//
+//////////////////////
+@model Order
+
+<form asp-action="Checkout" method="post" role="form">
+    <h3 class="my-5">
+        You're just one step away from your delicious pies.
+    </h3>
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="col-6">
+        <div class="row g-2">
+            <div class="col-12">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label asp-for="AddressLine1" class="form-label"></label>
+                <input asp-for="AddressLine1" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label asp-for="AddressLine2" class="form-label"></label>
+                <input asp-for="AddressLine2" class="form-control" />
+            </div>
+
+            <div class="col-6">
+                <label asp-for="City" class="form-label"></label>
+                <input asp-for="City" class="form-control" />
+            </div>
+
+            <div class="col-6">
+                <label asp-for="State" class="form-label"></label>
+                <input asp-for="State" class="form-control" />
+            </div>
+
+            <div class="col-6">
+                <label asp-for="ZipCode" class="form-label"></label>
+                <input asp-for="ZipCode" class="form-control" />
+            </div>
+
+            <div class="col-6">
+                <label asp-for="Country" class="form-label"></label>
+                <input asp-for="Country" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+            </div>
+
+            <div class="col-12">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+            </div>
+
+        </div>
+
+        <div class="mt-2">
+            <div class="col-md-offset-2 col-md-5">
+                <input type="submit" class="btn btn-secondary" value="Complete order" />
+            </div>
+        </div>
+    </div>
+</form>
+
+///////////////////////
+//OrderController.cs //
+///////////////////////
+[HttpPost]
+public IActionResult Checkout(Order order)
+{
+	List<ShoppingCartItem> items = _shoppingCart.GetShoppingCartItems();
+	
+	if (items.Count == 0)
+	{
+		ModelState.AddModelError("", "Your cart is empty, add some pies first");
+	}
+
+	if (ModelState.IsValid)
+	{
+		_orderRepository.CreateOrder(order);
+		_shoppingCart.ClearCart();
+		return RedirectToAction("CheckoutComplete");
+	}
+	return View(order);
+}
+
+
+
+//////////////////////
+//Checkout.cshtml v2//
+//////////////////////
+@model Order
+
+<form asp-action="Checkout" method="post" role="form">
+    <h3 class="my-5">
+        You're just one step away from your delicious pies.
+    </h3>
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="col-6">
+        <div class="row g-2">
+            <div class="col-12">
+                <label asp-for="FirstName" class="form-label"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="LastName" class="form-label"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="AddressLine1" class="form-label"></label>
+                <input asp-for="AddressLine1" class="form-control" />
+                <span asp-validation-for="AddressLine1" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="AddressLine2" class="form-label"></label>
+                <input asp-for="AddressLine2" class="form-control" />
+                <span asp-validation-for="AddressLine2" class="text-danger"></span>
+            </div>
+
+            <div class="col-6">
+                <label asp-for="City" class="form-label"></label>
+                <input asp-for="City" class="form-control" />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+
+            <div class="col-6">
+                <label asp-for="State" class="form-label"></label>
+                <input asp-for="State" class="form-control" />
+                <span asp-validation-for="State" class="text-danger"></span>
+            </div>
+
+            <div class="col-6">
+                <label asp-for="ZipCode" class="form-label"></label>
+                <input asp-for="ZipCode" class="form-control" />
+                <span asp-validation-for="ZipCode" class="text-danger"></span>
+            </div>
+
+            <div class="col-6">
+                <label asp-for="Country" class="form-label"></label>
+                <input asp-for="Country" class="form-control" />
+                <span asp-validation-for="Country" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <input asp-for="PhoneNumber" class="form-control" />
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+        </div>
+
+        <div class="mt-2">
+            <div class="col-md-offset-2 col-md-5">
+                <input type="submit" class="btn btn-secondary" value="Complete order" />
+            </div>
+        </div>
+    </div>
+</form>
+
+
+////////////////
+//libman.json //
+////////////////
+
+    {
+      "provider": "cdnjs",
+      "library": "jquery-validate@1.19.5",
+      "destination": "wwwroot/lib/jquery-validate/"
+    },
+    {
+      "provider": "cdnjs",
+      "library": "jquery-validation-unobtrusive@4.0.0",
+      "destination": "wwwroot/lib/jquery-validation-unobtrusive/"
+    }
+
+////////////////////	
+// _Layout.cshtml //
+////////////////////
+
+    <script src="~/lib/jquery-validate/jquery.validate.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js"></script>
+	
+	
